@@ -1,0 +1,522 @@
+#include "EditClass.h"
+#include "ButtonClass.h"
+#include <SFML/Graphics.hpp>
+
+using namespace sf;
+Textbox edit1(15, Color::Black, false);
+const int MAX = 80;
+
+double Derivation(double a);
+double Integration(double a, double b);
+void eatspaces(char* str); 
+double expr(char* str, double x); 
+double term(char* str, int& index, double x); 
+double trigon(char* str, int& index, double x);
+double power(char* str, int& index, double x); 
+double number(char* str, int& index, double x);
+char* extract(char* str, int& index); 
+
+double f(double x)
+  {
+   std::string string;
+   string = edit1.getText();
+   char buffer[MAX] = { 0 };
+   strcpy_s(buffer, MAX, string.c_str());
+   eatspaces(buffer); 
+   if (!buffer[0])
+	   return 0;
+   return expr(buffer, x);
+  }
+
+  void eatspaces(char* str)
+  {
+      int i = 0;                          
+      int j = 0;                          
+      while ((*(str + i) = *(str + j++)) != '\0') 
+          if (*(str + i) != ' ')  
+              i++;
+      return;
+  }
+
+  double expr(char* str, double x)
+  {
+      double value = 0.0;         
+      int index = 0;              
+      value = term(str, index, x);   
+      for (; ; )                
+      {
+          switch (*(str + index++)) 
+          {
+          case '\0':          
+              return value;
+          case '+':           
+              value += term(str, index, x);
+              break;
+          case '-':           
+              value -= term(str, index, x);
+              break;
+          default:            
+              int i = index;
+              while (--i > 0)
+              exit(1);
+          }
+      }
+  }
+
+  double term(char* str, int& index, double x)
+  {
+      double value = 0.0;            
+      value = power(str, index, x);      
+      while ((*(str + index) == '*') || (*(str + index)  == '/'))
+      {
+          if (*(str + index) == '*')
+              value *= power(str, ++index, x);
+          if (*(str + index) == '/')
+              value /= power(str, ++index, x);
+      }
+      return value;
+  }
+
+  double power(char* str, int& index, double x)
+  {
+      double value = 0.0;
+      value = trigon(str, index, x);
+      while (*(str + index) == '^') value = pow(value, trigon(str, ++index, x));
+      return value;
+  }
+
+  double trigon(char* str, int& index, double x)
+  {
+      int buf_index = 0;
+      int temp_index = index; 
+      char* p_str = 0;   
+      double value = 0;
+      while (isalpha(*(str + temp_index)))
+      {
+          buf_index++;    
+          temp_index++;   
+      }
+      if (!buf_index)     
+      {
+          value = number(str, index, x);
+          return value;
+      }
+      else                
+      {
+          p_str = new char[buf_index + 1]; 
+          p_str[buf_index] = '\0';
+          strncpy(p_str, str + index, buf_index);
+      }
+      if (strcmp(p_str, "x") == 0)
+      {
+          value = x;
+          index = temp_index;
+          delete[] p_str;
+          return value;
+      }
+      else if (strcmp(p_str, "sin") == 0)      
+      {
+          value = sin(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;     
+          return value;
+      }
+      else if (strcmp(p_str, "cos") == 0) 
+      {
+          value = cos(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;    
+          return value;
+      }
+      else if (strcmp(p_str, "tan") == 0) 
+      {
+          value = tan(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;    
+          return value;
+      }
+      else if (strcmp(p_str, "acos") == 0)
+      {
+          value = acos(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;
+          return value;
+      }
+      else if (strcmp(p_str, "asin") == 0)
+      {
+          value = asin(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;
+          return value;
+      }
+      else if (strcmp(p_str, "atan") == 0)
+      {
+          value = atan(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;
+          return value;
+      }
+      else if (strcmp(p_str, "sinh") == 0)
+      {
+          value = sinh(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;
+          return value;
+      }
+      else if (strcmp(p_str, "cosh") == 0)
+      {
+          value = cosh(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;
+          return value;
+      }
+      else if (strcmp(p_str, "tanh") == 0)
+      {
+          value = tanh(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;
+          return value;
+      }
+      else if (strcmp(p_str, "log") == 0)
+      {
+          value = log(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;
+          return value;
+      }
+      else if (strcmp(p_str, "abs") == 0)
+      {
+          value = abs(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;
+          return value;
+      }
+      else if (strcmp(p_str, "sqrt") == 0)
+      {
+          value = sqrt(number(str, temp_index, x));
+          index = temp_index;
+          delete[] p_str;
+          return value;
+      }
+      else  return value;
+  }
+
+  double number(char* str, int& index, double x)
+  {
+      double value = 0.0;                 
+      if (*(str + index) == '(')
+      {
+          char* p_substr = 0;
+          p_substr = extract(str, ++index);
+          value = expr(p_substr, x);
+          delete[] p_substr;
+          return value;
+      }
+      while (isdigit(*(str + index)))       
+          value = 10 * value + (*(str + index++) - '0');
+      if (*(str + index) != '.')         
+          return value;
+      double factor = 1.0;               
+      while (isdigit(*(str + (++index)))) 
+      {
+          factor *= 0.1;
+          value = 10*value + (*(str + index) - '0') * factor;
+      }
+      return value;
+  }
+
+  char* extract(char* str, int& index)
+  {
+      char buffer[MAX];       
+      char* p_str = 0;        
+      int numL = 0;          
+      int buf_index = index;  
+      do
+      {
+          buffer[index - buf_index] = *(str + index);
+          switch (buffer[index - buf_index]) 
+          {
+          case ')':
+              if (numL == 0)
+              {
+                  buffer[index - buf_index] = '\0';
+                  ++index;    
+                  p_str = new char[index - buf_index];
+                  if (!p_str) exit(1);
+                  strcpy_s(p_str, index - buf_index, buffer);
+                  return p_str;
+              }
+              else
+                  numL--;     
+              break;
+          case '(':
+              numL++;         
+              break;
+          }
+      } while (*(str + index++) != '\0');     
+      exit(1);
+      return p_str;
+  }
+
+const int X = 720; 
+const int Y = 720;
+
+Button btn2 ("+", { 25, 25 }, 20, sf::Color(128, 128, 128), sf::Color::Black);
+Button btn3 ("-", { 25, 25 }, 20, sf::Color(128, 128, 128), sf::Color::Black);
+Button btn4 ("+Rgt", { 25, 25 }, 20, sf::Color(128, 128, 128), sf::Color::Black);
+Button btn5("-Rgt", { 25, 25 }, 20, sf::Color(128, 128, 128), sf::Color::Black);
+Button btn6("+Lft", { 25, 25 }, 20, sf::Color(128, 128, 128), sf::Color::Black);
+Button btn7("-Lft", { 25, 25 }, 20, sf::Color(128, 128, 128), sf::Color::Black);
+Button btn8("Adj", { 25, 25 }, 20, sf::Color(128, 128, 128), sf::Color::Black);
+
+Textbox Derv(15, Color::Black, false), Intgr(15, Color::Black, false);
+
+void main()
+{
+    sf::Event event;
+    static int x0 = X / 2;
+    static int y0 = Y / 2;
+    sf::Font arial;
+    arial.loadFromFile("arial.ttf");
+    edit1.setFont(arial);
+    edit1.setPosition({ 5, 25 });
+    Derv.setFont(arial);
+    Derv.setPosition({ 5, 45 });
+    Intgr.setFont(arial);
+    Intgr.setPosition({ 5, 65 });
+    btn2.setFont(arial);
+    btn2.setPosition({ X - btn2.getWidth(), 250 });
+    btn3.setFont(arial);
+    btn3.setPosition({ X - btn3.getWidth(), 300 });
+    btn4.setFont(arial);
+    btn4.setPosition({ X - btn4.getWidth(), 350 });
+    btn5.setFont(arial);
+    btn5.setPosition({ X - btn5.getWidth(), 400 });
+    btn6.setFont(arial);
+    btn6.setPosition({ X - btn6.getWidth(), 450 });
+    btn7.setFont(arial);
+    btn7.setPosition({ X - btn7.getWidth(), 500 });
+    btn8.setPosition({ X - btn2.getWidth() , 550 });
+    btn8.setFont(arial);
+    sf::RenderWindow window(sf::VideoMode(X, Y), "Graphs");
+    while (window.isOpen())
+    {
+        sf::Font arial;
+        arial.loadFromFile("arial.ttf");
+        window.clear(Color::White);
+        CircleShape Graph(1.f);
+        Graph.setFillColor(sf::Color::Red);
+        float C = 1500;
+        static int step = 30;
+        static int LimitLft = -12, LimitRgt = 12;
+        int mass = (-LimitLft + LimitRgt) * C + 1;
+        static int i = 0;
+        Text Mode, Dervt, Intgrt;
+        Dervt.setCharacterSize(15);
+        Dervt.setFillColor(Color::Black);
+        Dervt.setFont(arial);
+        Dervt.setPosition({ 5, 85 });
+        Dervt.setString("Derivation result at {_,_} is _");
+        Intgrt.setCharacterSize(15);
+        Intgrt.setFillColor(Color::Black);
+        Intgrt.setFont(arial);
+        Intgrt.setPosition({ 5, 105 });
+        Intgrt.setString("Y() = ");
+        Mode.setCharacterSize(15);
+        Mode.setFillColor(Color::Black);
+        Mode.setFont(arial);
+        Mode.setPosition({ 5, 5 });
+        Mode.setString("Current mode - None");
+        switch (i)
+        {
+        case 1:
+            Mode.setString("Current mode - Graph");
+            edit1.setSelected(true);
+            Derv.setSelected(false);
+            Intgr.setSelected(false);
+            break;
+        case 2:
+            Mode.setString("Current mode - Derv");
+            edit1.setSelected(false);
+            Derv.setSelected(true);
+            Intgr.setSelected(false);
+            break;
+        case 3:
+            Mode.setString("Current mode - Number");
+            edit1.setSelected(false);
+            Derv.setSelected(false);
+            Intgr.setSelected(true);
+            break;
+        case 4:
+            Mode.setString("Current mode - None");
+            edit1.setSelected(false);
+            Derv.setSelected(false);
+            Intgr.setSelected(false);
+        }
+        if (!edit1.Selected())
+        {
+            for (int i = 0; i < mass; i++)
+            {
+                float x = LimitLft + i / C;
+                float y = f(x);
+                float x1 = x0 + x * step;
+                float y1 = y0 - y * step;
+                Graph.setPosition(x1, y1);
+                window.draw(Graph);
+            }
+        }
+        if (!Derv.Selected())
+        {
+            std::exception e;
+            try
+            {
+                Dervt.setString("Derivation result at {" + Derv.getText() + ", " + std::to_string(f(std::stod(Derv.getText()))) + "} " + " is " + std::to_string(Derivation(std::stod(Derv.getText()))));
+                if (std::stod(Derv.getText()) == ERANGE) throw e;
+            }
+            catch (std::exception e) {}
+        }
+        if (!Intgr.Selected())
+        {
+            std::exception e;
+            try
+            {
+                Intgrt.setString("Y(" + Intgr.getText() + ") =  " + std::to_string(f(std::stod(Intgr.getText()))));
+                if (Intgr.getText().empty()) throw e;
+            }
+            catch (std::exception e) {}
+           
+        }
+       /* if (!Intgr.Selected())
+        {
+            std::exception e;
+            try
+            {
+                if (Intgr.getText().empty()) throw e;
+                else Intgrt.setString("Y(" + std::to_string(Intgr.getText()[0] - 48) + " to " + std::to_string(Intgr.getText()[2] - 48) + " is " + std::to_string(-1 * Integration((double)(Intgr.getText()[0] - 48), (double)(Intgr.getText()[2] - 48))));
+            }
+            catch (std::exception e) {}
+        }*/
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) y0 = y0 + 8 + 0.3 * step;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) x0 = x0 - 8 - 0.3 * step;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) y0 = y0 - 8 - 0.3 * step;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) x0 = x0 + 8 + 0.3 * step;
+
+        RectangleShape AxisY(Vector2f(2, Y));
+        RectangleShape AxisX(Vector2f(X, 2));
+        AxisY.setFillColor(Color::Black);
+        AxisX.setFillColor(Color::Black);
+        AxisY.setPosition(x0, 0);
+        AxisX.setPosition(0, y0);
+        window.draw(AxisX);
+        window.draw(AxisY);
+        RectangleShape Line[1000];
+        Text Numbers[1000];
+
+        for (int i = 0; i < 1000; i++)
+        {
+            int a = 10;
+            Line[i].setSize(Vector2f(1, a));
+            Line[i].setFillColor(Color::Black);
+            Numbers[i].setFont(arial);
+            Numbers[i].setFillColor(Color::Black);
+            Numbers[i].setCharacterSize(a + 0.1 * step);
+            if (i < 500)
+            {
+                if (i < 250)
+                {
+                    Line[i].setPosition(x0 - (i + 1) * step, y0 - a / 2);
+                    Numbers[i].setString(std::to_string(-i - 1));
+                    Numbers[i].setPosition(x0 - (i + 1) * step - 10, y0 + 20);
+                }
+                else
+                {
+                    Line[i].setPosition(x0 + (i - 251) * step, y0 - a / 2);
+                    Numbers[i].setString(std::to_string(i - 249));
+                    Numbers[i].setPosition(x0 + (i - 249) * step, y0 + 20);
+                }
+            }
+            else
+            {
+                Line[i].setRotation(90);
+                if (i < 750)
+                {
+                    Line[i].setPosition(x0 + a / 2, y0 + (i - 750) * step);
+                    Numbers[i].setString(std::to_string(-i + 750));
+                    Numbers[i].setPosition(x0 + 10, y0 + (i - 750) * step);
+                }
+                else
+                {
+                    Line[i].setPosition(x0 + a / 2, y0 + (i - 751) * step);
+                    Numbers[i].setString(std::to_string(-i + 749));
+                    Numbers[i].setPosition(x0 + 10, y0 + (i - 749) * step);
+                }
+            }
+            window.draw(Numbers[i]);
+            window.draw(Line[i]);
+        }
+        while (window.pollEvent(event))
+        {
+            switch (event.type)
+            {
+            case sf::Event::Closed:
+                window.close();
+            case sf::Event::TextEntered:
+                edit1.typedOn(event);
+                Derv.typedOn(event);
+                Intgr.typedOn(event);
+                break;
+            case sf::Event::MouseButtonPressed:
+                if (btn2.isMouseOver(window)) step = step + 5 + 0.1 * step;
+                if (btn3.isMouseOver(window)) step = step - 5 - 0.1 * step;
+                if (btn4.isMouseOver(window)) LimitRgt++;
+                if (btn5.isMouseOver(window)) LimitRgt--;
+                if (btn6.isMouseOver(window)) LimitLft--;
+                if (btn7.isMouseOver(window)) LimitLft++;
+                if (btn8.isMouseOver(window))
+                {
+                    i++;
+                    if (i >= 5) i = 1;
+                }
+            }
+        }
+        window.draw(Dervt);
+        window.draw(Intgrt);
+        window.draw(Mode);
+        edit1.drawTo(window);
+        Derv.drawTo(window);
+        Intgr.drawTo(window);
+        btn2.drawTo(window);
+        btn3.drawTo(window);
+        btn4.drawTo(window);
+        btn5.drawTo(window);
+        btn6.drawTo(window);
+        btn7.drawTo(window);
+        btn8.drawTo(window);
+        window.display();
+    }
+}
+double Derivation(double a)
+{
+	double D;
+	double dx = 0.000001;
+	D = (f(a + dx) - f(a)) / dx;
+	return D;
+}
+double Integration(double a, double b)
+{
+	double I = 0;
+	double h = 0.000001;
+	double n = (a - b) / h;
+	if (b < a)
+	{
+		n = n;
+		for (int i = 0; i <= n; i++) I = I + h * f(b + h * (i - 0.5));
+	}
+	if (b > a)
+	{
+		n = -n;
+		for (int i = 0; i <= n; i++) I = I - h * f(a + h * (i - 0.5));
+	}
+	if (f(-1) == -1 * f(1)) if (a == -b) I = 0;
+	return I;
+}
